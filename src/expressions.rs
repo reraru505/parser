@@ -4,8 +4,11 @@
 use std::rc::Rc;
 use std::cell::RefCell;
 
-use crate::binaryexp::BinaryExpressionBlock;
+use crate::binaryexp::*;
 use crate::lexer::token_type::Token;
+use crate::symboltable::symbol::DataType;
+use crate::symboltable::symbol::Qualifier;
+
 
 pub struct Scope{
     scope : Vec<String>,
@@ -19,35 +22,34 @@ pub enum VAR_Definition_Type{
 }
 
 #[derive(Debug)]
-pub struct BLOCK{
-    block : Vec<Expression>
+pub struct Block{
+    block : Vec<String>
 }
 
 
-#[derive(Debug)]
-pub struct VAR_Definition{
-    def_type : VAR_Definition_Type ,
-    data_type : Token,
-    data_id : Token,
-    data_value : Token,
-}
-
-
-#[derive(Debug)]
-pub struct FN_Definition{
-    fn_id : Token ,
-    fn_args : Vec<VAR_Definition> ,
-    fn_body : BLOCK,
-}
-
-#[derive(Debug)]
-pub enum Expression{
-    binary_exp(BinaryExpressionTree),
-    var_definition(VAR_Definition),
-    fn_definition(FN_Definition),
-//    if_statement(IF_Statement),
-//    else_if_statement(ELSE_IF_Statement),
-//    else_statement(ELSE_Statement),
-//    for_statement(FOR_Statement),
-    scope_block(BLOCK),
-}
+//pub struct ARGS{
+//    
+//}
+//
+//
+//#[derive(Debug)]
+//pub struct VAR_Definition{
+//    def_type : VAR_Definition_Type ,
+//    data_type : Token,
+//    data_id : Token,
+//    data_value : Token,
+//}
+//
+//
+//#[derive(Debug)]
+//pub enum Expression{
+//    binary_exp(BinaryExpressionBlock),
+//    var_definition(VAR_Definition),
+////    fn_definition(FN_Definition),
+////    if_statement(IF_Statement),
+////    else_if_statement(ELSE_IF_Statement),
+////    else_statement(ELSE_Statement),
+////    for_statement(FOR_Statement),
+//    scope_block(Block),
+//    return_statement(BinaryExpressionBlock),
+//}

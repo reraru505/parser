@@ -2,7 +2,7 @@
 #![allow(unused_variables)]
 
 use crate::lexer::token_type::*;
-
+use crate::symboltable::symbol::{DataType , Qualifier};
 
 #[derive(Debug)]
 pub enum BinaryExpressionType{
@@ -13,7 +13,7 @@ pub enum BinaryExpressionType{
     Division_op,
 }
 
-
+#[derive(Debug)]
 pub struct BinaryExpression {
 
     pub exp_value : Option<Token> ,
@@ -22,9 +22,17 @@ pub struct BinaryExpression {
     pub exp_right :Option<Token> ,
 }
 
-
+#[derive(Debug)]
 pub struct BinaryExpressionTree{
     pub tree : Vec<BinaryExpression>,
 }
 
+
+
+#[derive(Debug)]
+pub struct BinaryExpressionBlock{
+    pub b_tree : BinaryExpressionTree,
+    pub b_type : DataType,
+    pub b_qualifier : Qualifier,
+}
 
