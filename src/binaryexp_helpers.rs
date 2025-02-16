@@ -46,7 +46,7 @@ pub fn handle_outside_brackets(context : Vec<Token> ,replacer : Token) -> Vec<To
    // }
 
     println!("\n");
-
+    
     return ncon;
     
 }

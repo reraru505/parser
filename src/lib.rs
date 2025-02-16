@@ -8,10 +8,13 @@ pub mod expressions;
 pub mod parsingdata;
 
 pub mod parser;
-pub mod grammer;
+
 
 pub mod function;
 pub mod function_traits;
+pub mod function_args;
+
+pub mod variable;
 
 pub mod binaryexp;
 pub mod binaryexp_impl;
@@ -25,7 +28,11 @@ use crate::lexer::lex::Lexeme;
 //use crate::binaryexp::*;
 //use crate::binaryexp_handle::*;
 use crate::parsingdata::ParsingData;
-use crate::function::find_all_function_def;
+use crate::function::{find_all_function_def ,
+		      find_all_function_args ,
+		      find_all_function_blocks ,
+		      hanble_function_args};
+
 pub fn parse(inp_lexemes : Vec<Lexeme> ){
 
     //let grammer = Grammer;
@@ -42,9 +49,11 @@ pub fn parse(inp_lexemes : Vec<Lexeme> ){
 
     let parsingdatavec = ParsingData::generate(inp_lexemes);
     let retval = find_all_function_def(parsingdatavec);
-
+    let retval = find_all_function_args(retval);
+    let retval = find_all_function_blocks(retval);
+    let retval = hanble_function_args(retval);
     for i in retval{
-	println!("{:?}" , i);
+	println!("{:#?}\n" , i);
     }
     
     

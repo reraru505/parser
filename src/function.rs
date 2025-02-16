@@ -1,17 +1,15 @@
-use crate::parsingdata::ParsingData;
+use crate::parsingdata::{ParsingData , Block};
 use crate::lexer::token_type::*;
-use crate::expressions::*;
 use crate::symboltable::symbol::DataType;
 use crate::lexer::lex::Lexeme;
+use crate::variable::{Variable , get_variable_def_from_args};
 
 #[derive(Debug)]
 pub enum FunctionDefType{
 
     DEF_WITH_ARGS,
-    DEF_WTTH_ARGS_NO_RETURN,
     DEF_NO_ARGS,
-    DEF_NO_ARGS_NO_RETURN,
-    
+
 }
 
 #[derive(Debug)]
@@ -20,7 +18,7 @@ pub struct FunctionDef{
     pub fn_id : Token ,
     pub fn_type : Option<FunctionDefType>,
     pub fn_return_type : DataType,
-    pub fn_args : Option< Vec<Lexeme> >,
+    pub fn_args : Option< Vec<Variable>>,
     pub fn_body : Option<Block>,
 }
 
@@ -64,6 +62,188 @@ pub fn find_all_function_def(parsingvec : Vec<ParsingData>) -> Vec<ParsingData>{
     }
     
     return retval;
+}
+
+// this depends on find all function args to run first
+// message for myself , please dont call this before and try to look for the fucking bugs
+
+pub fn find_all_function_args(parsingvec : Vec<ParsingData>) -> Vec<ParsingData>{
+
+    let mut retval  : Vec<ParsingData> = Vec::new();
+
+    let mut i = 0;
+    while i < parsingvec.len() {
+
+	if let ParsingData::functiondef(mut s) = parsingvec[i].clone() {
+
+	    if let ParsingData::lexeme(v) = parsingvec[i + 1].clone() {
+
+		if matches!(v.tokens , Token::t_stc(STC::stc_scope_begin(_))){
+
+		    s.fn_type = Some(FunctionDefType::DEF_NO_ARGS);
+		    retval.push(ParsingData::functiondef(s));
+		    i += 1;
+		    
+		}else if matches!(v.tokens , Token::t_stc(STC::stc_arg_begin(_))){
+
+		    s.fn_type = Some(FunctionDefType::DEF_WITH_ARGS);
+
+		    retval.push(ParsingData::functiondef(s));
+		    
+		    let mut pushval : Vec<Lexeme> = Vec::new();
+
+		    i += 2;
+
+		    loop {
+			if let ParsingData::lexeme(l) = parsingvec[i].clone(){
+			    if matches!(l.tokens , Token::t_stc(STC::stc_arg_end(_))){
+				break;
+			    }else{
+				pushval.push(l);
+			    }
+			}
+			i += 1;
+		    }
+		    
+		    retval.push(ParsingData::temp_arg_indicator(pushval));
+		    i += 1;
+		}
+
+		
+		
+	    }
+	  
+	}else {
+	    retval.push(parsingvec[i].clone());
+	    i += 1;
+	}
+
+	
+    }
+
+    return retval;
+    
+}
+
+
+pub fn find_all_function_blocks(parsingvec : Vec<ParsingData>) -> Vec<ParsingData>{
+
+    let mut retval  : Vec<ParsingData> = Vec::new();
+
+    let mut i = 0;
+    while i < parsingvec.len() {
+
+	if let ParsingData::functiondef(mut tfndef) = parsingvec[i].clone(){
+	    
+	    if matches!(tfndef.clone().fn_type.unwrap() , FunctionDefType::DEF_NO_ARGS){
+
+		if let ParsingData::lexeme(tlex) = parsingvec[i + 1].clone(){
+		    if matches!(tlex.tokens , Token::t_stc(STC::stc_scope_begin(_))){
+
+			i += 2;
+			let mut inner = 0;
+			let mut pushval : Vec<ParsingData> = Vec::new(); 
+			
+			loop {
+			    if let ParsingData::lexeme(l) = parsingvec[i].clone(){
+
+				if matches!(l.tokens , Token::t_stc(STC::stc_scope_begin(_))){
+				    inner += 1;
+				}else if matches!(l.tokens , Token::t_stc(STC::stc_scope_end(_))){
+				    if inner == 0 {
+					break;
+				    }else {
+					inner -= 1;
+				    }
+				    
+				}else{
+				    pushval.push(parsingvec[i].clone());
+				}
+			    }
+			    i += 1;
+			}
+
+			if let Token::t_identifier(name) = tfndef.fn_id.clone() {
+			    tfndef.fn_body = Some (Block{scope : name , block : pushval});
+			}
+			retval.push(ParsingData::functiondef(tfndef));
+		    }
+		
+		} 
+
+	    }else if matches!(tfndef.clone().fn_type.unwrap() , FunctionDefType::DEF_WITH_ARGS){
+
+		if matches!(parsingvec[i + 1] , ParsingData::temp_arg_indicator(_)){
+		    if let ParsingData::lexeme(tlex) = parsingvec[i + 2].clone(){
+			if matches!(tlex.tokens , Token::t_stc(STC::stc_scope_begin(_))){
+
+			    let preserved = i + 1;
+			    i += 3;
+			    let mut inner = 0;
+			    let mut pushval : Vec<ParsingData> = Vec::new();
+			    
+			    loop {
+				if let ParsingData::lexeme(l) = parsingvec[i].clone(){
+
+				    if matches!(l.tokens , Token::t_stc(STC::stc_scope_begin(_))){
+					inner += 1;
+				    }else if matches!(l.tokens , Token::t_stc(STC::stc_scope_end(_))){
+					if inner == 0 {
+					    break;
+					}else {
+					    inner -= 1;
+					}
+					
+				    }else{
+					pushval.push(parsingvec[i].clone());
+				    }
+				}
+				i += 1;
+			    }
+			    if let Token::t_identifier(name) = tfndef.fn_id.clone() {
+				tfndef.fn_body = Some (Block{scope : name , block : pushval});
+			    }
+			    
+			    retval.push(ParsingData::functiondef(tfndef));
+			    retval.push(parsingvec[preserved].clone());
+			    
+			}
+		    }
+		
+		} 
+	    }
+	    i+= 1;
+	}else {
+	    retval.push(parsingvec[i].clone());
+	    i+= 1;
+	}
+    }
+    return retval;
+    
+}
+
+
+pub fn hanble_function_args(parsingvec : Vec<ParsingData>) -> Vec<ParsingData>{
+
+    let len = parsingvec.len();
+    let mut retval : Vec<ParsingData> = Vec::new();
+    for i in 0 .. len {
+	if let ParsingData::functiondef(mut s) = parsingvec[i].clone(){
+	    if matches!(s.fn_type , Some(FunctionDefType::DEF_WITH_ARGS)){
+
+		if let ParsingData::temp_arg_indicator(v) = parsingvec[i + 1].clone(){
+		    s.fn_args = Some(get_variable_def_from_args(v));
+		    retval.push(ParsingData::functiondef(s));
+		} 
+		
+	    }else{
+		retval.push(parsingvec[i].clone());
+	    }
+	}
+    }
+
+    return retval;
+    
 }
 
 pub fn get_function_return_type(in_context : Vec<ParsingData>) -> DataType{

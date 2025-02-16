@@ -1,6 +1,6 @@
 # parser
 Abusing the rust programming language to create a parser
-# Currently The Parser is just a glorified Binary Expression Breaking System 
+# Now The Parser is not just a glorified Binary Expression Breaking System 
 
 ## Things it currently does 
 - [x] Breals the binary expression into a expression tree

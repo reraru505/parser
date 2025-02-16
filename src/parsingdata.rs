@@ -4,6 +4,7 @@
 use crate::function::FunctionDef;
 use crate::lexer::lex::Lexeme;
 use crate::binaryexp::BinaryExpressionBlock;
+use crate::variable::Variable;
 
 struct Parser;
 
@@ -12,7 +13,23 @@ pub enum ParsingData{
     lexeme( Lexeme)  ,
     binexp( BinaryExpressionBlock),
     functiondef (FunctionDef),
-    temp_arg_indicator,
+    temp_arg_indicator(Vec<Lexeme>),
+}
+
+
+#[derive(Debug)]
+pub struct Block{
+    pub scope : String,
+    pub block : Vec<ParsingData>,
+}
+
+impl Clone for Block{
+    fn clone (&self ) -> Self {
+	Self {
+	    scope : self.scope.clone(),
+	    block : self.block.clone(),
+	}
+    }
 }
 
 
@@ -36,7 +53,7 @@ impl Clone for ParsingData{
 	    ParsingData::lexeme(s) => return ParsingData::lexeme(s.clone()),
 	    ParsingData::binexp(s) => return ParsingData::binexp(s.clone()),
 	    ParsingData::functiondef(s) => return ParsingData::functiondef(s.clone()),
-	    ParsingData::temp_arg_indicator => return ParsingData::temp_arg_indicator,
+	    ParsingData::temp_arg_indicator(s) => return ParsingData::temp_arg_indicator(s.clone()),
 	}
 	
     }

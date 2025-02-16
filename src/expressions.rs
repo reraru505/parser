@@ -21,10 +21,6 @@ pub enum VAR_Definition_Type{
     def_with_infered_value,
 }
 
-#[derive(Debug)]
-pub struct Block{
-    block : Vec<String>
-}
 
 
 //pub struct ARGS{
