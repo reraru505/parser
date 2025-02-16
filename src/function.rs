@@ -2,7 +2,7 @@ use crate::parsingdata::{ParsingData , Block};
 use crate::lexer::token_type::*;
 use crate::symboltable::symbol::DataType;
 use crate::lexer::lex::Lexeme;
-use crate::variable::{Variable , get_variable_def_from_args};
+use crate::variable::{Variable , get_variable_def_from_args , find_variable_declarations_in_scope};
 
 #[derive(Debug)]
 pub enum FunctionDefType{
@@ -246,6 +246,33 @@ pub fn hanble_function_args(parsingvec : Vec<ParsingData>) -> Vec<ParsingData>{
     
 }
 
+
+pub fn handle_variable_defs_in_functions(parsingvec : Vec<ParsingData>) -> Vec<ParsingData>{
+
+    let mut retval : Vec<ParsingData> = Vec::new();
+    
+    for i in parsingvec.iter(){
+
+	if matches!(i , ParsingData::functiondef(_)){
+	    if let ParsingData::functiondef(mut fdef) = i.clone() {
+		if let Some(mut block ) = fdef.fn_body{
+		    
+		    block.block = find_variable_declarations_in_scope(block.block.clone() , block.scope.clone());
+		    //println!("{:#?}", block);
+		    fdef.fn_body = Some(block.clone());
+		}
+
+		retval.push(ParsingData::functiondef(fdef));
+	    }
+	}else{
+	    retval.push(i.clone());
+	}
+	
+    }
+    return retval;
+    
+}
+
 pub fn get_function_return_type(in_context : Vec<ParsingData>) -> DataType{
 
     if let ParsingData::lexeme(s) = in_context[2].clone() {
@@ -302,16 +329,3 @@ pub fn is_function_def(in_context : Vec<ParsingData>) -> bool{
     
 }
 
-//pub fn drain_args(context : &mut Vec<ParsingData>) {
-//
-//    let mut inner_brackets = 0;
-//    let mut start = 0;
-//    let mut end = 0;
-//    
-//    for (index , i) in context.clone().iter().enumerate(){
-//	if matches!(i.tokens , Token::t_stc(STC::stc_arg_begin(_))){
-//	    
-//	}
-//    }
-//    
-//}

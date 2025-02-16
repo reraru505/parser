@@ -6,7 +6,7 @@ use std::fmt;
 use crate::lexer::token_type::*;
 use crate::binaryexp_helpers::*;
 
-pub fn break_binary_expression(context : &mut Vec<Token>   ) -> BinaryExpressionTree{
+pub fn break_binary_expression(context : &mut Vec<Token> , scope : &str  ) -> BinaryExpressionTree{
 
     let mut new_context = remove_brackets_from_single_token_inside_brackets(Rc::new(RefCell::new(context.clone())));
     
@@ -16,7 +16,6 @@ pub fn break_binary_expression(context : &mut Vec<Token>   ) -> BinaryExpression
     
     
     let mut tree_maker : Vec<Option<Token>> = Vec::new();
-    let scope = "mero_scope";
     
 
     

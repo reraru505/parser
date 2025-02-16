@@ -14,6 +14,7 @@ pub enum ParsingData{
     binexp( BinaryExpressionBlock),
     functiondef (FunctionDef),
     temp_arg_indicator(Vec<Lexeme>),
+    variable(Variable),
 }
 
 
@@ -54,8 +55,10 @@ impl Clone for ParsingData{
 	    ParsingData::binexp(s) => return ParsingData::binexp(s.clone()),
 	    ParsingData::functiondef(s) => return ParsingData::functiondef(s.clone()),
 	    ParsingData::temp_arg_indicator(s) => return ParsingData::temp_arg_indicator(s.clone()),
+	    ParsingData::variable(s) => return ParsingData::variable(s.clone()),
 	}
 	
     }
     
 }
+

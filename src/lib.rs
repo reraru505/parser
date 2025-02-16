@@ -31,7 +31,8 @@ use crate::parsingdata::ParsingData;
 use crate::function::{find_all_function_def ,
 		      find_all_function_args ,
 		      find_all_function_blocks ,
-		      hanble_function_args};
+		      hanble_function_args,
+		      handle_variable_defs_in_functions};
 
 pub fn parse(inp_lexemes : Vec<Lexeme> ){
 
@@ -52,8 +53,9 @@ pub fn parse(inp_lexemes : Vec<Lexeme> ){
     let retval = find_all_function_args(retval);
     let retval = find_all_function_blocks(retval);
     let retval = hanble_function_args(retval);
+    let retval = handle_variable_defs_in_functions(retval);
     for i in retval{
-	println!("{:#?}\n" , i);
+    	println!("{:#?}\n" , i);
     }
     
     

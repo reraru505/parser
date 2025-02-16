@@ -1,14 +1,17 @@
 
-use crate::lexer::token_type::{Token , Operator , Keyword , Data_Type};
+use crate::lexer::token_type::{Token , Operator , Keyword , Data_Type , STC};
 use crate::symboltable::symbol::{DataType , Qualifier};
 use crate::lexer::lex::Lexeme;
+use crate::binaryexp::BinaryExpressionTree;
+use crate::parsingdata::ParsingData;
+use crate::binaryexp_handle::break_binary_expression;
 
 #[derive(Debug)]
 pub struct Variable{
     pub var_id : String,
     pub var_type : DataType,
     pub var_qualifier : Qualifier,
-    pub var_value : Option<Token>, 
+    pub var_value : Option<BinaryExpressionTree>, 
 }
 
 impl Clone for Variable{
@@ -25,7 +28,7 @@ impl Clone for Variable{
 
 impl Variable{
 
-    pub fn new(v_id : String , v_type : DataType , v_qualifier : Qualifier , v_value : Option<Token>) -> Self{
+    pub fn new(v_id : String , v_type : DataType , v_qualifier : Qualifier , v_value : Option<BinaryExpressionTree>) -> Self{
 
 	Self {
 	    var_id : v_id,
@@ -98,4 +101,122 @@ pub fn get_variable_data_type(token : Token) -> DataType{
 	_ => return DataType::VOID, //this case will not be possible but the rust compiler is a bitch
     }
     
+}
+
+
+pub fn find_variable_declarations_in_scope(parsingvec : Vec<ParsingData> , scope : String ) -> Vec<ParsingData>{
+
+    let len = parsingvec.len();
+    let mut context : Vec<ParsingData> = Vec::new();
+    let mut retval : Vec<ParsingData> = Vec::new();
+
+    if len < 3 {
+	context = parsingvec.clone();
+    }
+
+    let mut i  = 0;
+    while i < len {
+
+	println!("i is {}", i);
+	if i < len - 3{
+	    context = parsingvec[i .. i + 3].to_vec();
+	}else {
+	    for k in i .. len {
+		context.push(parsingvec[k].clone());
+	    }
+	}
+	 	
+
+	if context.len() >  2 {
+
+	    let mut is_var_def = false;
+	    
+	    if let ParsingData::lexeme(l) = context[0].clone(){
+		if matches!(l.tokens , Token::t_identifier(_)){
+		    is_var_def = true;
+		    println!("\nONE\n");
+		}else{
+		    is_var_def = false;
+		}
+	    }
+	    if let ParsingData::lexeme(l) = context[1].clone(){
+		if matches!(l.tokens , Token::t_operator(Operator::type_assignment_op(_))){
+		    is_var_def = true;
+		    println!("\nTWO\n");
+		}else{
+		    is_var_def = false;
+		}
+	    }
+	    
+	    if let ParsingData::lexeme(l) = context[2].clone(){
+		 if matches!(l.tokens , Token::t_keyword(Keyword::data_type(_))){
+		     is_var_def = true;
+		     println!("\nTHREE\n");
+		 }else{
+		     is_var_def = false;
+		 }
+	    }
+	    
+	    if is_var_def == true {
+
+		let mut binexp : Vec<Token> = Vec::new();
+		i += 4;
+		
+		loop {
+
+		    if let ParsingData::lexeme(l) = parsingvec[i].clone(){
+			if matches!(l.tokens , Token::t_stc(STC::stc_end_expression(_))){
+			    binexp.push(l.tokens.clone());
+			    break;
+			}else {
+			    binexp.push(l.tokens.clone());
+			}
+		    }
+		    i += 1;
+		}
+		println!("\n i was set to {} ", i);
+		
+		let mut name = String::new();
+		let mut vtype = DataType::VOID;
+
+		if let ParsingData::lexeme(l) = context[0].clone(){
+		    if let Token::t_identifier(n) = l.tokens{
+			name = n;
+		    }
+		}
+		
+		if let ParsingData::lexeme(l) = context[2].clone(){
+		    vtype = get_variable_data_type(l.tokens);
+		}
+		
+		retval.push(ParsingData::variable(Variable::new(name ,
+								vtype ,
+								Qualifier::VARIABLE ,
+								Some(break_binary_expression(&mut binexp , &scope)))));
+		context.clear();
+		
+		i += 1;
+	    }else{
+		
+		
+		for i in context.iter(){
+		    retval.push(i.clone());
+		}
+		i += context.len();
+		
+		context.clear();
+	    }
+
+	    
+
+	}
+	
+	
+    }
+
+//    for i in context.iter(){
+//	retval.push(i.clone());
+//    }
+    
+    return retval;
 }
